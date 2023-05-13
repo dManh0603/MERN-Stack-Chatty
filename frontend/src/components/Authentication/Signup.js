@@ -1,21 +1,105 @@
-import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, VStack } from '@chakra-ui/react'
+import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, VStack, useToast } from '@chakra-ui/react'
 import React, { useState } from 'react'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 
 const Signup = () => {
 
-    const [show, setShow] = useState(false)
-    const [name, setName] = useState()
-    const [email, setEmail] = useState()
-    const [password, setPassword] = useState()
-    const [confirmPassword, setConfirmPassword] = useState()
-    const [avt, setAvt] = useState()
+    const [show, setShow] = useState(false);
+    const [name, setName] = useState();
+    const [email, setEmail] = useState();
+    const [password, setPassword] = useState();
+    const [confirmPassword, setConfirmPassword] = useState();
+    const [avt, setAvt] = useState();
+    const [loading, setLoading] = useState(false);
+    const toast = useToast();
+    const navigate = useNavigate();
 
-    const handleClick = () => setShow(!show)
+    const handleClick = () => setShow(!show);
     const avtDetails = (picture) => {
+        setLoading(true);
+
+        if (picture.type === 'image/jpeg' || picture.type === 'image/png' || picture.type === 'image/jpg') {
+            let data = new FormData()
+            data.append('file', picture)
+            data.append('upload_preset', 'MERN Stack Chatty')
+            data.append('cloud_name', 'dmanh6302')
+            fetch('https://api.cloudinary.com/v1_1/dmanh6302/image/upload', {
+                method: 'post',
+                body: data
+            })
+                .then(res => res.json())
+                .then(data => {
+                    setAvt(data.url.toString());
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error(err);
+                    setLoading(false);
+                })
+        } else {
+            toast({
+                title: 'Please select an image!',
+                status: 'warning',
+                duration: 5000,
+                isClosable: true,
+                position: 'bottom'
+            });
+            return;
+        }
 
     }
-    const submitHandler = () => {
+    const submitHandler = async () => {
+        setLoading(true);
+        if (!name || !email || !password || !confirmPassword) {
+            toast({
+                title: 'Please fill all the fields',
+                status: 'warning',
+                duration: 5000,
+                isClosable: true,
+                position: 'bottom',
+            });
+            setLoading(false);
+            return;
+        }
 
+        if (password !== confirmPassword) {
+            toast({
+                title: 'Confirmed passwords do not matach',
+                status: 'warning',
+                duration: 5000,
+                isClosable: true,
+                position: 'bottom',
+            });
+            return;
+        }
+        try {
+            const config = {
+                headers: {
+                    'Content-type': 'application/json'
+                },
+            };
+
+            const data = await axios.post(
+                '/api/user/signup',
+                { name, email, password, avt },
+                config
+            );
+
+            localStorage.setItem('userInfo', JSON.stringify(data));
+            setLoading(false);
+            navigate('/chats')
+        } catch (error) {
+            toast({
+                title: 'Error occured. Please try again later!',
+                description: error.response.data.message,
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+                position: 'bottom',
+            });
+            setLoading(false)
+        }
     }
 
     return (
@@ -78,6 +162,7 @@ const Signup = () => {
                 w={'100%'}
                 style={{ marginTop: 15 }}
                 onClick={submitHandler}
+                isLoading={loading}
             >
                 Sign up now !
             </Button>
