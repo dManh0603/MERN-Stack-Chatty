@@ -63,7 +63,7 @@ const Signup = () => {
                 </InputGroup>
             </FormControl>
 
-            <FormControl id='avt' isRequired>
+            <FormControl id='avt'>
                 <FormLabel>Upload your avatar</FormLabel>
                 <Input
                     type='file'

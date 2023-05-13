@@ -1,23 +1,13 @@
-const chats = require('../data/dummy data')
+const userRouter = require('./UserRouter')
+const errorHanlder = require('../middlewares/ErrorHandler')
 
 
 function route(app) {
-    app.use('/api/chat/:id', (req, res, next) => {
-        const singleChat = chats.find((c) => c._id === req.params.id)
-        res.send(singleChat)
-    })
 
-    app.use('/api/chat', (req, res, next) => {
-        res.send(chats)
-    })
+    app.use('/api/user', userRouter)
 
-
-    app.use('/', (req, res, next) => {
-        res.json("hello")
-    })
-
-
-
+    app.use(errorHanlder._404)
+    app.use(errorHanlder._500)
 }
 
 module.exports = route
