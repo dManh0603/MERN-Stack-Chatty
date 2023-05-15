@@ -72,13 +72,13 @@ class UserController {
         try {
             const user = await User.findOne({ email });
             if (!user) {
-                throw { statusCode: 400, message: "Invalid email or password" }
+                throw { statusCode: 400, message: "Invalid email or password" };
             }
 
             const passwordMatched = await user.matchPassword(password)
 
             if (!passwordMatched) {
-                throw { statusCode: 401, message: "You have entered wrong password!" }
+                throw { statusCode: 401, message: "You have entered wrong password!" };
 
             }
             res.status(200).json({
@@ -99,6 +99,28 @@ class UserController {
         }
 
 
+    }
+
+    async search(req, res) {
+
+        const keyword = req.query.search
+            ? {
+                $or: [
+                    { email: { $regex: req.query.search, $options: 'i' } },
+                    { name: { $regex: req.query.search, $options: 'i' } },
+                ]
+            } : {};
+
+        if (keyword) {
+            try {
+                const user = await User.find(keyword).find({ _id: { $ne: req.user._id } });
+                res.json(user);
+
+            } catch (error) {
+                res.status(500).json('Something went wrong. Please try again later!');
+                console.error(error)
+            }
+        }
     }
 
 }

@@ -1,10 +1,12 @@
 const userRouter = require('./UserRouter')
+const chatRouter = require('./ChatRouter')
 const errorHanlder = require('../middlewares/ErrorHandler')
 
 
 function route(app) {
 
     app.use('/api/user', userRouter)
+    app.use('/api/chat', chatRouter)
 
     app.use(errorHanlder._404)
     app.use(errorHanlder._500)
