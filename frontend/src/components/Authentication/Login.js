@@ -35,13 +35,20 @@ const Login = () => {
                 },
             };
 
-            const {data} = await axios.post(
+            const { data } = await axios.post(
                 '/api/user/login',
                 { email, password },
                 config
             );
             console.log(data)
             localStorage.setItem('userInfo', JSON.stringify(data.user));
+            toast({
+                title: 'Login successfully!',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+                position: 'bottom',
+            });
             setLoading(false);
             navigate('/chats')
 
