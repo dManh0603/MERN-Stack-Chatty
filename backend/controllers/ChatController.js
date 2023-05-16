@@ -49,24 +49,32 @@ class ChatController {
 
   async fetchChats(req, res, next) {
     try {
-      Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+      const results = await Chat.find({
+        $or: [
+          { users: { $elemMatch: { $eq: req.user._id } } },
+          // { groupAdmin: req.user._id }
+        ]
+      })
+
         .populate('users', '-password')
         .populate('groupAdmin', '-password')
-        .populate('latestMessage')
-        .sort({ updatedAt: -1 })
-        .then(async (results) => {
-          results = await User.populate(results, {
-            path: 'latestMessage.sender',
+        .populate({
+          path: 'latestMessage',
+          populate: {
+            path: 'sender',
             select: 'name avt email',
-          })
-          res.status(200).send(results)
+          },
         })
+        .sort({ updatedAt: -1 })
+        .exec();
 
+      res.status(200).json(results);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: error.message })
+      res.status(500).json({ message: error.message });
     }
   }
+
 
   async createGroup(req, res, next) {
     if (!req.body.users || !req.body.name) {

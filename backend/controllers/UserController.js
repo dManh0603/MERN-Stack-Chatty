@@ -72,7 +72,7 @@ class UserController {
         try {
             const user = await User.findOne({ email });
             if (!user) {
-                throw { statusCode: 400, message: "Invalid email or password" };
+                throw { statusCode: 400, message: "You have entered wrong email or password!" };
             }
 
             const passwordMatched = await user.matchPassword(password)
@@ -117,9 +117,11 @@ class UserController {
                 res.json(user);
 
             } catch (error) {
-                res.status(500).json('Something went wrong. Please try again later!');
+                res.status(500).json({ message: 'Something went wrong. Please try again later!' });
                 console.error(error)
             }
+        } else {
+            res.json({ message: 'Please provide keyword to search' })
         }
     }
 

@@ -1,30 +1,20 @@
-import { Avatar, Box, Button, Drawer, Input, Menu, MenuButton, MenuDivider, MenuItem, MenuList, Spinner, Text, Tooltip, useDisclosure, useToast } from '@chakra-ui/react'
-import React, { useState } from 'react'
-import { BellIcon, ChevronDownIcon, SearchIcon } from '@chakra-ui/icons'
-import { ChatState } from '../../contexts/ChatProvider'
-import ProfileModal from './ProfileModal'
-import { useNavigate } from 'react-router-dom'
-import {
-  DrawerBody,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
-} from '@chakra-ui/react'
-import axios from 'axios'
-import ChatLoading from '../ChatLoading'
-import UserListItem from '../UserList/UserListItem'
-
+import { Avatar, Box, Button, Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, Input, Menu, MenuButton, MenuDivider, MenuItem, MenuList, Spinner, Text, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
+import React, { useState } from 'react';
+import { BellIcon, ChevronDownIcon, SearchIcon } from '@chakra-ui/icons';
+import { ChatState } from '../../contexts/ChatProvider';
+import ProfileModal from './ProfileModal';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import ChatLoading from '../ChatLoading';
+import UserListItem from '../UserList/UserListItem';
 
 const SideDrawer = () => {
-
   const [search, setSearch] = useState('');
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingChat, setLoadingChat] = useState();
+  const [loadingChat, setLoadingChat] = useState(false);
   const { user, setSelectedChat, chats, setChats } = ChatState();
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -33,10 +23,10 @@ const SideDrawer = () => {
       toast({
         title: 'Please enter name or email to search',
         status: 'warning',
-        duration: '1000',
+        duration: 1000,
         isClosable: true,
-        position: 'top-left'
-      })
+        position: 'top-left',
+      });
       return;
     }
 
@@ -45,60 +35,58 @@ const SideDrawer = () => {
       const config = {
         headers: {
           Authorization: `Bearer ${user.token}`,
-        }
-      }
+        },
+      };
       const { data } = await axios.get(`/api/user?search=${search}`, config);
       setLoading(false);
       setSearchResult(data);
-
     } catch (error) {
+      console.error(error);
       toast({
         title: 'Something wrong. Please try again later!',
         status: 'error',
-        duration: '3000',
+        duration: 3000,
         isClosable: true,
-        position: 'bottom-left'
-      })
-
+        position: 'bottom-left',
+      });
     }
-  }
+  };
 
   const logoutHandler = () => {
     localStorage.removeItem('userInfo');
     navigate('/');
-  }
+  };
 
   const accessChat = async (userId) => {
     try {
-      setLoadingChat(true)
+      setLoadingChat(true);
       const config = {
         headers: {
           'Content-type': 'application/json',
           Authorization: `Bearer ${user.token}`,
-        }
-      }
+        },
+      };
+      console.log('access chat')
 
-      const { data } = await axios.post('/api/chat', { userId }, config)
-      console.log(data)
+      const { data } = await axios.post('/api/chat', { userId }, config);
       if (!chats.find((c) => c._id === data._id)) {
-        setChats([data, ...chats])
+        setChats([data, ...chats]);
       }
-
       setSelectedChat(data);
       setLoading(false);
       onClose();
     } catch (error) {
-      console.log(error)
+      console.error(error);
       toast({
         title: 'Error retrieving your chats',
         description: error.message,
         status: 'error',
         duration: 3000,
         isClosable: true,
-        position: 'bottom-left'
+        position: 'bottom-left',
       });
     }
-  }
+  };
 
   return (
     <>
@@ -173,11 +161,11 @@ const SideDrawer = () => {
             {loading
               ? (<ChatLoading />)
               : (
-                searchResult?.map(user => (
+                searchResult?.map(u => (
                   <UserListItem
-                    key={user._id}
-                    user={user}
-                    handlerFunction={() => accessChat(user._id)}
+                    key={u._id}
+                    user={u}
+                    handleFunction={() => accessChat(u._id)}
                   />
                 ))
               )

@@ -4,11 +4,13 @@ import axios from 'axios';
 import { AddIcon } from '@chakra-ui/icons';
 import ChatLoading from './ChatLoading';
 import { getSender } from '../helpers/ChatHelper';
+import GroupChatModal from './miscellaneous/GroupChatModal';
+import { ChatState } from '../contexts/ChatProvider';
 
-const MyChats = () => {
-  const [loggedUser, setLoggedUser] = useState(null);
-  const [chats, setChats] = useState([]);
-  const [selectedChat, setSelectedChat] = useState(null);
+const MyChats = ({ fetchAgain }) => {
+  const [loggedUser, setLoggedUser] = useState();
+  const { chats, setChats, selectedChat, setSelectedChat } = ChatState();
+
   const toast = useToast();
 
   useEffect(() => {
@@ -20,6 +22,7 @@ const MyChats = () => {
           },
         };
         const { data } = await axios.get('/api/chat', config);
+        console.log(data)
         setChats(data);
       } catch (error) {
         console.error(error);
@@ -37,7 +40,7 @@ const MyChats = () => {
     const user = JSON.parse(localStorage.getItem('userInfo'));
     setLoggedUser(user);
     fetchChats();
-  }, [toast]);
+  }, [fetchAgain]);
 
   const handleChatClick = (chat) => {
     setSelectedChat(chat);
@@ -45,7 +48,7 @@ const MyChats = () => {
 
   return (
     <Box
-      display={{ base: selectedChat ? 'none' : 'flex', md: 'flex' }}
+      display={{ base: !selectedChat ? 'flex' : 'none', md: 'flex' }}
       flexDir="column"
       alignItems="center"
       p={3}
@@ -59,19 +62,21 @@ const MyChats = () => {
         px={3}
         fontSize={{ base: '28px', md: '30px' }}
         fontFamily="Work sans"
-        display="flex"
+        display={{ base: selectedChat ? 'none' : 'flex', md: 'flex' }}
         w="100%"
         justifyContent="space-between"
         alignItems="center"
       >
         My chats
-        <Button
-          display="flex"
-          fontSize={{ base: '16px', md: '12px', lg: '16px' }}
-          rightIcon={<AddIcon />}
-        >
-          New group chat
-        </Button>
+        <GroupChatModal>
+          <Button
+            display="flex"
+            fontSize={{ base: '16px', md: '12px', lg: '16px' }}
+            rightIcon={<AddIcon />}
+          >
+            New group chat
+          </Button>
+        </GroupChatModal>
       </Box>
 
       <Box
@@ -84,30 +89,35 @@ const MyChats = () => {
         borderRadius="lg"
         overflow="hidden"
       >
-        {chats.length > 0 ? (
-          <Stack overflowY="scroll">
-            {chats.map((chat) => (
-              <Box
-                key={chat._id}
-                onClick={() => handleChatClick(chat)}
-                cursor="pointer"
-                bg={selectedChat === chat ? '#38B2AC' : '#E8E8E8'}
-                color={selectedChat === chat ? 'white' : 'black'}
-                px={3}
-                py="4px"
-                borderRadius="lg"
-              >
-                <Text>
-                  {!chat.isGroupChat
-                    ? getSender(loggedUser, chat.users)
-                    : chat.chatName}
-                </Text>
-              </Box>
-            ))}
-          </Stack>
-        ) : (
-          <ChatLoading />
-        )}
+        {chats.length > 0
+          ? (
+            <Stack overflowY="scroll">
+              {chats.map((chat) => (
+                <Box
+                  key={chat._id}
+                  onClick={() => handleChatClick(chat)}
+                  cursor="pointer"
+                  bg={selectedChat === chat ? '#38B2AC' : '#E8E8E8'}
+                  color={selectedChat === chat ? 'white' : 'black'}
+                  px={3}
+                  py="4px"
+                  borderRadius="lg"
+                >
+                  <Text>
+                    {!chat.isGroupChat
+                      ? getSender(loggedUser, chat.users)
+                      : chat.chatName}
+                  </Text>
+                </Box>
+              ))}
+            </Stack>
+          )
+          : (
+            // <ChatLoading />
+            <div>
+              You have no chats.
+            </div>
+          )}
       </Box>
     </Box>
   );

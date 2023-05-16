@@ -16,7 +16,7 @@ const authenticate = async (req, res, next) => {
             req.user = await User.findById(decodedToken.id).select('-password');
             next()
         } catch (error) {
-            console.error(error);
+            console.log(error);
             const statusCode = error.statusCode || 500;
             const message = error.message || 'Internal server error';
             res.status(statusCode).json({ error: message });
