@@ -25,7 +25,7 @@ const MyChats = ({ fetchAgain }) => {
         console.log(data)
         setChats(data);
       } catch (error) {
-        console.error(error);
+        console.log(error);
         toast({
           title: 'Error retrieving your chats',
           description: error.message,

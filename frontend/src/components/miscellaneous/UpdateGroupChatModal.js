@@ -6,7 +6,7 @@ import UserBadgeItem from '../UserList/UserBadgeItem'
 import axios from 'axios'
 import UserListItem from '../UserList/UserListItem'
 
-const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
+const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
 
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [groupChatName, setGroupChatName] = useState()
@@ -45,7 +45,7 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
       removedUser._id === user._id ? setSelectedChat() : setSelectedChat(data);
       setFetchAgain(!fetchAgain);
       setLoading(false);
-
+      fetchMessages();
     } catch (error) {
       console.log(error);
       toast({
