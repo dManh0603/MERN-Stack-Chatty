@@ -8,15 +8,35 @@ import UpdateGroupChatModal from './miscellaneous/UpdateGroupChatModal'
 import { } from './style.css'
 import axios from 'axios'
 import ScrollableChat from './ScrollableChat'
+import io from 'socket.io-client'
+import Lottie from 'react-lottie'
+import animationData from '../animations/typing.json'
+
+const ENDPOINT = 'http://localhost:3000';
+
+let socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [newMessage, setNewMessage] = useState('');
+    const [socketConented, setSocketConented] = useState(false)
+    const [typing, setTyping] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
+
     const toast = useToast();
 
-    const { user, selectedChat, setSelectedChat } = ChatState();
+    const { user, selectedChat, setSelectedChat, notification, setNotification } = ChatState();
+
+    const defaultOptions = {
+        loop: true,
+        autoplay: true,
+        animationData: animationData,
+        rendererSettings: {
+            preserveAspectRatio: 'xMidYMid slice'
+        }
+    }
 
     const fetchMessages = async () => {
         if (!selectedChat) return;
@@ -32,8 +52,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
             const { data } = await axios.get(`/api/message/${selectedChat._id}`, config);
             setMessages(data);
-
             setLoading(false);
+
+            socket.emit('join chat', selectedChat._id);
+
         } catch (error) {
             console.log(error);
             setLoading(false);
@@ -49,12 +71,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         }
     }
 
-    useEffect(() => {
-        fetchMessages();
-    }, [selectedChat]);
-
     const sendMessage = async (e) => {
         if (e.key === "Enter" && newMessage) {
+
+            socket.emit('stop typing', selectedChat._id);
+
             try {
                 const config = {
                     headers: {
@@ -69,6 +90,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                     chatId: selectedChat._id,
 
                 }, config);
+
+                socket.emit('new message', data)
 
                 setMessages([...messages, data]);
 
@@ -91,7 +114,55 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const typingHandler = (e) => {
         setNewMessage(e.target.value);
 
+        if (!socketConented) return;
+
+        if (!typing) {
+            setTyping(true);
+            socket.emit('typing', selectedChat._id)
+        }
+
+        let lastTypingTime = new Date().getTime();
+        const timerLength = 3000;
+
+        setTimeout(() => {
+            const timeNow = new Date().getTime();
+            const timeDiff = timeNow - lastTypingTime;
+
+            if (timeDiff >= timerLength && typing) {
+                socket.emit('stop typing', selectedChat._id)
+                setTyping(false)
+            }
+
+        }, timerLength)
     }
+
+    useEffect(() => {
+        socket = io(ENDPOINT);
+        socket.emit('setup', user);
+        socket.on('connected', () => setSocketConented(true));
+        socket.on('typing', () => setIsTyping(true))
+        socket.on('stop typing', () => setIsTyping(false))
+    }, [])
+
+    useEffect(() => {
+        fetchMessages();
+
+        selectedChatCompare = selectedChat;
+    }, [selectedChat]);
+
+    useEffect(() => {
+        socket.on('message received', (newMessage) => {
+            if (!selectedChatCompare || selectedChatCompare._id !== newMessage.chat._id) {
+                if (!notification.includes(newMessage)) {
+                    setNotification([newMessage, ...notification]);
+                    setFetchAgain(!fetchAgain);
+                }
+            } else {
+                setMessages([...messages, newMessage])
+            }
+        })
+    })
+
 
     return (<>
         {selectedChat ? (
@@ -153,9 +224,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                             <>
                                 <div className='messages'>
                                     <ScrollableChat messages={messages} />
+
                                 </div>
 
                                 <FormControl onKeyDown={sendMessage}>
+                                    {isTyping
+                                        ? <div>
+                                            <Lottie
+                                                options={defaultOptions}
+                                                width={44}
+
+                                            />
+                                        </div>
+                                        : <></>}
                                     <Input
                                         mt={2}
                                         bg={'white'}
