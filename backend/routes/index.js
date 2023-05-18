@@ -10,8 +10,8 @@ function route(app) {
 
     app.use('/api/message', messageRouter)
 
-    app.use(errorHanlder._404)
-    app.use(errorHanlder._500)
+    // app.use(errorHanlder._404)
+    // app.use(errorHanlder._500)
 }
 
 module.exports = route

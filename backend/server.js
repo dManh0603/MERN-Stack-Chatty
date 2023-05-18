@@ -2,6 +2,7 @@ const express = require('express')
 const route = require('./routes')
 const dotenv = require('dotenv')
 const db = require('./config/db')
+const path = require('path')
 const { Server } = require('socket.io')
 
 
@@ -14,6 +15,21 @@ dotenv.config()
 db.connect()
 
 route(app)
+
+// -------------Production-------------------//
+const dirname = path.resolve();
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(dirname, 'frontend','build')))
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(dirname, 'frontend', 'build', 'index.html'))
+  })
+
+} else {
+  app.get('/', (req, res) => {
+    res.send('API Server is running');
+  })
+}
 
 const PORT = process.env.BE_PORT || 8080
 
@@ -55,3 +71,5 @@ io.on("connection", (socket) => {
   })
 
 })
+
+
